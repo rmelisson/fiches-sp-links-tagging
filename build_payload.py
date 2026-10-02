@@ -32,6 +32,15 @@ def main() -> None:
             if r["slug"] and r["id"]
         ]
 
+    # Tout document déjà suggéré doit pouvoir être retrouvé, même absent de docs-titles.csv.
+    known = {(d["s"], d["g"]) for d in docs}
+    for doc in links:
+        for link in doc["links"]:
+            key = (link["candidate_source"], link["candidate_slug"])
+            if link["candidate_type"] == "document" and key not in known:
+                known.add(key)
+                docs.append({"s": key[0], "g": key[1], "i": link["candidate_id"], "t": link["candidate_label"]})
+
     target.write_text(
         json.dumps({"links": links, "docs": docs, "l2": l2}, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
