@@ -311,6 +311,9 @@
   var ghConnected = false;
   var dirty = false;
   var syncTimer = null;
+  var syncing = false;
+  var syncAgain = false;
+  var changeCount = 0;
   var AUTOSYNC_DELAY_MS = 20000;
 
   function loadReviewer() {
@@ -357,6 +360,7 @@
   async function githubRequest(url, options) {
     options = options || {};
     return fetch(url, Object.assign({}, options, {
+      cache: "no-store",
       headers: Object.assign(
         { Authorization: "Bearer " + ghToken, Accept: "application/vnd.github+json" },
         options.headers || {}
@@ -402,7 +406,8 @@
   async function pushToGithub() {
     var path = votesPath();
     var lastError = "";
-    for (var attempt = 0; attempt < 3; attempt++) {
+    for (var attempt = 0; attempt < 4; attempt++) {
+      if (attempt > 0) await new Promise(function (r) { setTimeout(r, 800 * attempt); });
       var remote = await fetchRemote(path);
       loadRowsIntoState(remote.rows);   // intègre les évaluations des autres avant d'écrire
       var body = {
@@ -420,20 +425,29 @@
   }
 
   async function syncToGithub() {
+    // Une seule écriture à la fois : deux PUT concurrents se périmeraient mutuellement (409).
+    if (syncing) { syncAgain = true; return; }
     var btn = document.getElementById("btn-github-sync");
     clearTimeout(syncTimer);
+    syncing = true;
     btn.disabled = true;
     setGithubStatus("Synchronisation en cours…");
+    var versionAtStart = changeCount;
     try {
       if (!ghConnected) await connect();
       await pushToGithub();
-      dirty = false;
+      dirty = changeCount !== versionAtStart;   // des votes ont pu arriver pendant l'envoi
       setGithubStatus("✓ Enregistré dans " + votesPath() + " (" + state.tags.size + " ligne(s))");
     } catch (e) {
       setGithubStatus("⚠ " + e.message);
       if (ghConnected) dirty = true;
     } finally {
+      syncing = false;
       btn.disabled = false;
+      if (syncAgain || (dirty && ghConnected && changeCount !== versionAtStart)) {
+        syncAgain = false;
+        syncTimer = setTimeout(syncToGithub, 1000);
+      }
     }
   }
 
@@ -449,6 +463,7 @@
   function writeTag(doc, link, vote) {
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
     var previous = state.tags.get(key);
+    changeCount++;
     state.tags.set(key, {
       source_doc_id: doc.source_doc_id,
       candidate_id: link.candidate_id,
