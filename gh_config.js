@@ -1,0 +1,1 @@
+window.GH_CONFIG = {"repo":"owner/repo","branch":"main","dir":"votes","enc":{"salt":"OaePDHCxykrU7e3NU7bQZA==","iv":"5Bek3pBXbcAelS4E","iterations":600000,"ct":"i2JdntaHtGlh/lR9HoFR3FXHAjcQEm799x4Go5fWJBz8aeuWD7M9rbWi3KVIP3LUjULgVZ4PLs6+6ywnreqCYcqCZSN/WRKvHjdJvnV3C+6TsHV5lk449wy+JXSyllvqFwxq+4mEKIpJcTEZvg=="}};
