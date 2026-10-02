@@ -59,13 +59,6 @@
   h1 { font-size: 21px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
   .subtitle { color: var(--ink-muted); font-size: 13px; margin: 0 0 14px; }
 
-  .storage-panel {
-    background: var(--surface); border: 1px solid var(--line-strong);
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  }
-  .storage-panel .status { flex: 1; min-width: 200px; font-size: 12.5px; color: var(--ink-muted); }
-  .storage-panel .status strong { color: var(--ink); font-family: var(--font-mono); font-size: 12px; }
   .panel-label {
     font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
     color: var(--ink-muted); margin: 14px 0 6px;
@@ -176,17 +169,6 @@
       510 documents, 2 728 liens suggérés. Évaluez chaque lien 👍 pertinent / 👎 non pertinent.
     </p>
 
-    <div class="panel-label">Enregistrement local (fichier CSV sur cette machine)</div>
-    <div class="storage-panel">
-      <span class="status" id="storage-status">
-        Choisissez (ou créez) un fichier CSV pour y enregistrer vos évaluations.
-      </span>
-      <button type="button" class="btn primary" id="btn-choose-file">Choisir un fichier CSV…</button>
-      <button type="button" class="btn" id="btn-download">Télécharger le CSV</button>
-      <button type="button" class="btn" id="btn-load-fallback">Charger un CSV…</button>
-      <input type="file" id="file-input" accept=".csv,text/csv">
-    </div>
-
     <div class="panel-label">Enregistrement partagé (GitHub)</div>
     <div class="github-panel">
       <div class="github-grid">
@@ -200,7 +182,7 @@
       <div class="github-actions">
         <button type="button" class="btn primary" id="btn-github-sync">Se connecter / Enregistrer</button>
         <span class="github-status" id="github-status">
-          Vos évaluations sont enregistrées dans votre propre fichier, après connexion elles sont sauvegardées automatiquement.
+          Les évaluations sont partagées (un seul fichier) et signées de votre nom ; après connexion elles sont sauvegardées automatiquement.
         </span>
       </div>
     </div>
@@ -225,14 +207,12 @@
   var DOCS = [];   // rempli après déchiffrement de links.enc.js
   var PAGE_SIZE = 30;
   var state = { filter: "all", query: "", shown: PAGE_SIZE, tags: new Map() };
-  var fileHandle = null;
-  var supportsFSA = typeof window.showSaveFilePicker === "function";
 
   var CONFIDENCE_LABELS = { strong: "fort", moderate: "modéré", weak: "faible" };
   var TYPE_LABELS = { document: "document", l2: "thème L2" };
 
   // --- CSV helpers -------------------------------------------------------
-  var CSV_HEADER = ["source_doc_id", "candidate_id", "candidate_type", "candidate_label", "vote", "tagged_at"];
+  var CSV_HEADER = ["source_doc_id", "candidate_id", "candidate_type", "candidate_label", "vote", "tagged_at", "tagged_by"];
 
   function csvEscape(v) {
     v = v == null ? "" : String(v);
@@ -285,12 +265,23 @@
     return sourceDocId + "__" + candidateType + "__" + candidateId;
   }
 
+  // Fusion par lien : l'évaluation la plus récente l'emporte. Une évaluation
+  // annulée reste dans le fichier avec vote vide (elle se propage ainsi aux autres).
+  function mergeRow(r) {
+    if (!r.source_doc_id || !r.candidate_id) return;
+    var key = tagKey(r.source_doc_id, r.candidate_type, r.candidate_id);
+    var existing = state.tags.get(key);
+    if (!existing || (r.tagged_at || "") > (existing.tagged_at || "")) state.tags.set(key, r);
+  }
   function loadRowsIntoState(rows) {
-    rows.forEach(function (r) {
-      if (!r.source_doc_id || !r.candidate_id) return;
-      var key = tagKey(r.source_doc_id, r.candidate_type, r.candidate_id);
-      state.tags.set(key, r);
-    });
+    rows.forEach(mergeRow);
+  }
+  function activeTag(key) {
+    var t = state.tags.get(key);
+    return t && t.vote ? t : undefined;
+  }
+  function currentReviewer() {
+    return document.getElementById("gh-reviewer").value.trim();
   }
 
   // UTF-8 safe base64 (French accents included) -- btoa() alone only
@@ -302,76 +293,10 @@
     return decodeURIComponent(escape(atob(b64)));
   }
 
-  // --- local file persistence --------------------------------------------
-  function setStatus(text) {
-    document.getElementById("storage-status").innerHTML = text;
-  }
-
-  async function writeToHandle() {
-    if (!fileHandle) return;
-    try {
-      var writable = await fileHandle.createWritable();
-      await writable.write(tagsToCsv());
-      await writable.close();
-      setStatus("Enregistrement dans <strong>" + fileHandle.name + "</strong> — " + state.tags.size + " évaluation(s)");
-    } catch (e) {
-      setStatus("⚠ Écriture impossible (" + e.message + "). Utilisez « Télécharger le CSV » en secours.");
-    }
-  }
-
-  async function chooseFile() {
-    if (!supportsFSA) return;
-    try {
-      fileHandle = await window.showSaveFilePicker({
-        suggestedName: "link_tags.csv",
-        types: [{ description: "CSV", accept: { "text/csv": [".csv"] } }]
-      });
-      try {
-        var file = await fileHandle.getFile();
-        var text = await file.text();
-        if (text.trim()) {
-          loadRowsIntoState(parseCsv(text));
-          setStatus("Reprise depuis <strong>" + fileHandle.name + "</strong> — " + state.tags.size + " évaluation(s) existante(s)");
-        } else {
-          setStatus("Nouvel enregistrement dans <strong>" + fileHandle.name + "</strong>");
-        }
-      } catch (e) {
-        setStatus("Nouvel enregistrement dans <strong>" + fileHandle.name + "</strong>");
-      }
-      await writeToHandle();
-      render();
-    } catch (e) {
-      // sélection annulée par l'utilisateur -- état inchangé
-    }
-  }
-
-  function downloadCsv() {
-    var blob = new Blob([tagsToCsv()], { type: "text/csv" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "link_tags.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function loadFromFallbackInput(file) {
-    var reader = new FileReader();
-    reader.onload = function () {
-      loadRowsIntoState(parseCsv(String(reader.result)));
-      setStatus("Chargement de " + state.tags.size + " évaluation(s) depuis <strong>" + file.name +
-        "</strong> — pensez à retélécharger le CSV après de nouvelles évaluations");
-      render();
-    };
-    reader.readAsText(file);
-  }
-
   // --- GitHub sync (mot de passe partagé) ----------------------------------
   // Le jeton GitHub est chiffré (PBKDF2 -> AES-GCM) dans gh_config.js ; le mot
-  // de passe partagé le déchiffre dans le navigateur. Chaque relecteur écrit
-  // dans son propre fichier <dir>/<nom>.csv : pas de conflit entre relecteurs.
+  // de passe partagé le déchiffre dans le navigateur. Toutes les évaluations vont
+  // dans <dir>/link_tags.csv, fusionnées par lien (la plus récente l'emporte).
   var GH = window.GH_CONFIG || null;
   var ghToken = null;
   var ghConnected = false;
@@ -382,10 +307,6 @@
   function loadReviewer() {
     var saved = localStorage.getItem("link-tagging:reviewer");
     if (saved != null) document.getElementById("gh-reviewer").value = saved;
-  }
-  function slugify(name) {
-    return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
   function setGithubStatus(text) {
     document.getElementById("github-status").textContent = text;
@@ -423,9 +344,8 @@
     }));
   }
 
-  function reviewerPath() {
-    var slug = slugify(document.getElementById("gh-reviewer").value);
-    return slug ? GH.dir + "/" + slug + ".csv" : null;
+  function votesPath() {
+    return GH.dir + "/link_tags.csv";
   }
   function contentsUrl(path) {
     return "https://api.github.com/repos/" + GH.repo + "/contents/" + path;
@@ -442,9 +362,9 @@
 
   async function connect() {
     if (!GH || !window.LINKS_ENC) throw new Error("gh_config.js ou links.enc.js introuvable : site non configuré.");
-    var name = document.getElementById("gh-reviewer").value.trim();
+    var name = currentReviewer();
     var password = document.getElementById("gh-password").value;
-    if (!reviewerPath()) throw new Error("Renseignez votre nom.");
+    if (!name) throw new Error("Renseignez votre nom.");
     if (!password) throw new Error("Renseignez le mot de passe.");
     try {
       ghToken = await decryptToken(password);
@@ -453,31 +373,26 @@
       throw new Error("Mot de passe incorrect.");
     }
     localStorage.setItem("link-tagging:reviewer", name);
-    // Reprise des votes déjà enregistrés ; les votes locaux l'emportent.
-    var remote = await fetchRemote(reviewerPath());
-    remote.rows.forEach(function (r) {
-      if (!r.source_doc_id || !r.candidate_id) return;
-      var key = tagKey(r.source_doc_id, r.candidate_type, r.candidate_id);
-      if (!state.tags.has(key)) state.tags.set(key, r);
-    });
+    // Reprise des évaluations déjà enregistrées (par tous les relecteurs).
+    loadRowsIntoState((await fetchRemote(votesPath())).rows);
     ghConnected = true;
     render();
   }
 
   async function pushToGithub() {
-    var path = reviewerPath();
-    var csv = tagsToCsv();
+    var path = votesPath();
     var lastError = "";
     for (var attempt = 0; attempt < 3; attempt++) {
       var remote = await fetchRemote(path);
+      loadRowsIntoState(remote.rows);   // intègre les évaluations des autres avant d'écrire
       var body = {
-        message: "votes: " + path.split("/").pop().replace(".csv", "") + " (" + state.tags.size + ")",
-        content: utf8ToBase64(csv),
+        message: "votes: " + (currentReviewer() || "anonyme") + " (" + state.tags.size + ")",
+        content: utf8ToBase64(tagsToCsv()),
         branch: GH.branch
       };
       if (remote.sha) body.sha = remote.sha;
       var res = await githubRequest(contentsUrl(path), { method: "PUT", body: JSON.stringify(body) });
-      if (res.ok) return;
+      if (res.ok) { render(); return; }
       lastError = "HTTP " + res.status + ": " + (await res.text()).slice(0, 200);
       if (res.status !== 409 && res.status !== 422) break;
     }
@@ -493,7 +408,7 @@
       if (!ghConnected) await connect();
       await pushToGithub();
       dirty = false;
-      setGithubStatus("✓ " + state.tags.size + " évaluation(s) enregistrée(s) dans " + reviewerPath());
+      setGithubStatus("✓ Enregistré dans " + votesPath() + " (" + state.tags.size + " ligne(s))");
     } catch (e) {
       setGithubStatus("⚠ " + e.message);
       if (ghConnected) dirty = true;
@@ -513,22 +428,18 @@
 
   async function setVote(doc, link, vote) {
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
-    var current = state.tags.get(key);
-    if (current && current.vote === vote) {
-      state.tags.delete(key);
-    } else {
-      state.tags.set(key, {
-        source_doc_id: doc.source_doc_id,
-        candidate_id: link.candidate_id,
-        candidate_type: link.candidate_type,
-        candidate_label: link.candidate_label,
-        vote: vote,
-        tagged_at: new Date().toISOString()
-      });
-    }
+    var current = activeTag(key);
+    state.tags.set(key, {
+      source_doc_id: doc.source_doc_id,
+      candidate_id: link.candidate_id,
+      candidate_type: link.candidate_type,
+      candidate_label: link.candidate_label,
+      vote: current && current.vote === vote ? "" : vote,
+      tagged_at: new Date().toISOString(),
+      tagged_by: currentReviewer()
+    });
     render();
     scheduleAutosync();
-    if (fileHandle) await writeToHandle();
   }
 
   // --- affichage ---------------------------------------------------------
@@ -563,7 +474,7 @@
     if (total === 0) return "empty";
     var n = 0;
     doc.links.forEach(function (l) {
-      if (state.tags.get(tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id))) n++;
+      if (activeTag(tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id))) n++;
     });
     if (n === 0) return "untagged";
     if (n === total) return "done";
@@ -592,11 +503,12 @@
 
   function linkRowHtml(doc, link) {
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
-    var tag = state.tags.get(key);
+    var tag = activeTag(key);
     var votedClass = tag ? " voted-" + esc(tag.vote) : "";
     var sub = link.candidate_type === "document"
       ? esc(link.candidate_source) + " · score " + link.combined_score.toFixed(2)
       : "Thème L2 (" + esc(link.candidate_l1) + ") · score " + link.combined_score.toFixed(2);
+    if (tag && tag.tagged_by) sub += " · évalué par <strong>" + esc(tag.tagged_by) + "</strong> le " + esc((tag.tagged_at || "").slice(0, 10));
     var confidenceLabel = CONFIDENCE_LABELS[link.confidence] || link.confidence;
     var typeLabel = TYPE_LABELS[link.candidate_type] || link.candidate_type;
     return '<li class="link-row' + votedClass + '" data-key="' + esc(key) + '">' +
@@ -691,21 +603,7 @@
     state.shown += PAGE_SIZE;
     render();
   });
-  document.getElementById("btn-choose-file").addEventListener("click", chooseFile);
-  document.getElementById("btn-download").addEventListener("click", downloadCsv);
-  document.getElementById("btn-load-fallback").addEventListener("click", function () {
-    document.getElementById("file-input").click();
-  });
-  document.getElementById("file-input").addEventListener("change", function (e) {
-    if (e.target.files && e.target.files[0]) loadFromFallbackInput(e.target.files[0]);
-  });
   document.getElementById("btn-github-sync").addEventListener("click", syncToGithub);
-
-  if (!supportsFSA) {
-    document.getElementById("btn-choose-file").hidden = true;
-    setStatus("Votre navigateur ne peut pas enregistrer directement dans un fichier (fonctionnalité Chrome/Edge). " +
-      "Utilisez « Télécharger le CSV » régulièrement, et « Charger un CSV » pour reprendre une session précédente.");
-  }
 
   loadReviewer();
   window.addEventListener("beforeunload", function (e) {
