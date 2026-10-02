@@ -139,6 +139,13 @@
     padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--ink-muted);
   }
   .tier-badge.strong { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .tier-badge.manual { color: var(--ink); border-color: var(--ink-muted); border-style: dashed; }
+  .add-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+  .add-link input {
+    flex: 1; min-width: 220px; padding: 7px 10px; font-size: 12.5px; font-family: var(--font-sans);
+    border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .add-link .add-msg { flex-basis: 100%; font-size: 12px; color: var(--ink-muted); }
   .tier-badge.moderate { color: var(--accent); border-color: var(--accent); }
   .type-badge { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--structural); }
 
@@ -205,14 +212,16 @@
 (function () {
   "use strict";
   var DOCS = [];   // rempli après déchiffrement de links.enc.js
+  var DOC_INDEX = { byUrl: new Map(), byId: new Map() };   // annuaire pour les liens ajoutés à la main
+  var L2_TO_L1 = {};
   var PAGE_SIZE = 30;
   var state = { filter: "all", query: "", shown: PAGE_SIZE, tags: new Map() };
 
-  var CONFIDENCE_LABELS = { strong: "fort", moderate: "modéré", weak: "faible" };
+  var CONFIDENCE_LABELS = { strong: "fort", moderate: "modéré", weak: "faible", manual: "ajouté" };
   var TYPE_LABELS = { document: "document", l2: "thème L2" };
 
   // --- CSV helpers -------------------------------------------------------
-  var CSV_HEADER = ["source_doc_id", "candidate_id", "candidate_type", "candidate_label", "vote", "tagged_at", "tagged_by"];
+  var CSV_HEADER = ["source_doc_id", "candidate_id", "candidate_type", "candidate_label", "vote", "tagged_at", "tagged_by", "manual"];
 
   function csvEscape(v) {
     v = v == null ? "" : String(v);
@@ -331,7 +340,18 @@
   async function decryptLinks(password) {
     var gz = await decryptBytes(window.LINKS_ENC, password);
     var stream = new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"));
-    return JSON.parse(await new Response(stream).text());
+    var payload = JSON.parse(await new Response(stream).text());
+    return Array.isArray(payload) ? { links: payload, docs: [], l2: {} } : payload;
+  }
+
+  function loadPayload(payload) {
+    DOCS = payload.links;
+    L2_TO_L1 = payload.l2 || {};
+    (payload.docs || []).forEach(function (d) {
+      var entry = { source: d.s, slug: d.g, id: d.i, title: d.t };
+      DOC_INDEX.byUrl.set(d.s + "|" + d.g, entry);
+      DOC_INDEX.byId.set(d.i, entry);
+    });
   }
 
   async function githubRequest(url, options) {
@@ -368,7 +388,7 @@
     if (!password) throw new Error("Renseignez le mot de passe.");
     try {
       ghToken = await decryptToken(password);
-      DOCS = await decryptLinks(password);
+      loadPayload(await decryptLinks(password));
     } catch (e) {
       throw new Error("Mot de passe incorrect.");
     }
@@ -426,18 +446,25 @@
   }
 
 
-  async function setVote(doc, link, vote) {
+  function writeTag(doc, link, vote) {
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
-    var current = activeTag(key);
+    var previous = state.tags.get(key);
     state.tags.set(key, {
       source_doc_id: doc.source_doc_id,
       candidate_id: link.candidate_id,
       candidate_type: link.candidate_type,
       candidate_label: link.candidate_label,
-      vote: current && current.vote === vote ? "" : vote,
+      vote: vote,
       tagged_at: new Date().toISOString(),
-      tagged_by: currentReviewer()
+      tagged_by: currentReviewer(),
+      manual: (previous && previous.manual) || (link.manual ? "1" : "")
     });
+  }
+
+  async function setVote(doc, link, vote) {
+    var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
+    var current = activeTag(key);
+    writeTag(doc, link, current && current.vote === vote ? "" : vote);
     render();
     scheduleAutosync();
   }
@@ -449,9 +476,76 @@
     });
   }
 
+  // Liens ajoutés à la main : lignes du CSV marquées manual=1 et non annulées.
+  function docLinks(doc) {
+    var present = {};
+    doc.links.forEach(function (l) { present[tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id)] = true; });
+    var extra = [];
+    state.tags.forEach(function (t, key) {
+      if (t.source_doc_id !== doc.source_doc_id || t.manual !== "1" || !t.vote || present[key]) return;
+      var entry = t.candidate_type === "document" ? DOC_INDEX.byId.get(t.candidate_id) : null;
+      extra.push({
+        candidate_type: t.candidate_type,
+        candidate_id: t.candidate_id,
+        candidate_label: t.candidate_label,
+        candidate_source: entry ? entry.source : "",
+        candidate_slug: entry ? entry.slug : "",
+        candidate_l1: L2_TO_L1[t.candidate_id] || "",
+        confidence: "manual",
+        combined_score: null,
+        manual: true
+      });
+    });
+    return doc.links.concat(extra);
+  }
+
+  var ROUTES = {
+    "contribution": "contributions",
+    "fiche-service-public": "fiches_service_public",
+    "fiche-ministere-travail": "fiches_ministere_travail",
+    "modeles-de-courriers": "modeles_de_courriers",
+    "outils": "outils",
+    "infographie": "infographies"
+  };
+
+  // URL code.travail.gouv.fr -> lien candidat, ou { error }.
+  function resolveUrl(doc, text) {
+    var url;
+    try { url = new URL(text.trim()); } catch (e) { return { error: "URL invalide." }; }
+    if (url.hostname !== "code.travail.gouv.fr") return { error: "L'URL doit être sur code.travail.gouv.fr." };
+    var parts = url.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+    if (parts[0] === "themes") {
+      var l1 = parts[1], l2 = decodeURIComponent(url.hash.slice(1));
+      if (!l2) return { error: "Ajoutez l'ancre du thème L2 (…/themes/" + (l1 || "<l1>") + "#<l2>)." };
+      if (!L2_TO_L1[l2]) return { error: "Thème L2 inconnu : " + l2 };
+      if (L2_TO_L1[l2] !== l1) return { error: "Le thème « " + l2 + " » appartient à « " + L2_TO_L1[l2] + " », pas à « " + l1 + " »." };
+      return { link: { candidate_type: "l2", candidate_id: l2, candidate_label: l2, candidate_source: "", candidate_slug: "",
+        candidate_l1: l1, confidence: "manual", combined_score: null, manual: true }, summary: "Thème L2 " + l2 + " (" + l1 + ")" };
+    }
+    var source = ROUTES[parts[0]];
+    if (!source || !parts[1]) return { error: "Type d'URL non géré (" + (parts[0] || "vide") + ")." };
+    var entry = DOC_INDEX.byUrl.get(source + "|" + parts[1]);
+    if (!entry) return { error: "Document introuvable : " + source + " / " + parts[1] };
+    if (entry.id === doc.source_doc_id) return { error: "C'est la fiche elle-même." };
+    return { link: { candidate_type: "document", candidate_id: entry.id, candidate_label: entry.title, candidate_source: source,
+      candidate_slug: entry.slug, candidate_l1: "", confidence: "manual", combined_score: null, manual: true },
+      summary: entry.title + " (" + source + ")" };
+  }
+
+  function addManualLink(doc, text) {
+    var res = resolveUrl(doc, text);
+    if (res.error) return res;
+    var existing = activeTag(tagKey(doc.source_doc_id, res.link.candidate_type, res.link.candidate_id));
+    if (!existing || existing.vote !== "good") {
+      writeTag(doc, res.link, "good");
+      scheduleAutosync();
+    }
+    return res;
+  }
+
   function computeStats() {
     var totalLinks = 0;
-    DOCS.forEach(function (d) { totalLinks += d.links.length; });
+    DOCS.forEach(function (d) { totalLinks += docLinks(d).length; });
     var good = 0, bad = 0;
     state.tags.forEach(function (t) { if (t.vote === "good") good++; else if (t.vote === "bad") bad++; });
     return { totalLinks: totalLinks, good: good, bad: bad, tagged: good + bad };
@@ -470,10 +564,11 @@
   }
 
   function docStatus(doc) {
-    var total = doc.links.length;
+    var links = docLinks(doc);
+    var total = links.length;
     if (total === 0) return "empty";
     var n = 0;
-    doc.links.forEach(function (l) {
+    links.forEach(function (l) {
       if (activeTag(tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id))) n++;
     });
     if (n === 0) return "untagged";
@@ -505,9 +600,10 @@
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
     var tag = activeTag(key);
     var votedClass = tag ? " voted-" + esc(tag.vote) : "";
+    var score = link.combined_score != null ? " · score " + link.combined_score.toFixed(2) : " · ajouté manuellement";
     var sub = link.candidate_type === "document"
-      ? esc(link.candidate_source) + " · score " + link.combined_score.toFixed(2)
-      : "Thème L2 (" + esc(link.candidate_l1) + ") · score " + link.combined_score.toFixed(2);
+      ? esc(link.candidate_source) + score
+      : "Thème L2 (" + esc(link.candidate_l1) + ")" + score;
     if (tag && tag.tagged_by) sub += " · évalué par <strong>" + esc(tag.tagged_by) + "</strong> le " + esc((tag.tagged_at || "").slice(0, 10));
     var confidenceLabel = CONFIDENCE_LABELS[link.confidence] || link.confidence;
     var typeLabel = TYPE_LABELS[link.candidate_type] || link.candidate_type;
@@ -525,14 +621,19 @@
   }
 
   function cardHtml(doc) {
-    var linksHtml = doc.links.length
-      ? '<ul class="link-list">' + doc.links.map(function (l) { return linkRowHtml(doc, l); }).join("") + "</ul>"
+    var links = docLinks(doc);
+    var linksHtml = links.length
+      ? '<ul class="link-list">' + links.map(function (l) { return linkRowHtml(doc, l); }).join("") + "</ul>"
       : '<p style="color:var(--ink-muted);font-size:12.5px;font-style:italic;margin:8px 0 0">Aucun lien recommandé.</p>';
     return '<article class="card" data-doc-id="' + esc(doc.source_doc_id) + '">' +
       '<h2 class="card-title">' + esc(doc.source_title) + "</h2>" +
       '<div class="card-meta"><span class="id">' + esc(doc.source_doc_id) + "</span><span>·</span><span>" +
       esc(doc.source_l2) + " <span style='opacity:.6'>(" + esc(doc.source_l1) + ")</span></span></div>" +
-      linksHtml + "</article>";
+      linksHtml +
+      '<form class="add-link" autocomplete="off">' +
+      '<input type="text" placeholder="Ajouter un lien : https://code.travail.gouv.fr/…">' +
+      '<button type="submit" class="btn">Ajouter</button>' +
+      '<span class="add-msg"></span></form></article>';
   }
 
   function contains(value, q) {
@@ -543,7 +644,7 @@
   function matchesQuery(doc, q) {
     if (!q) return true;
     if (contains(doc.source_title, q) || contains(doc.source_slug, q) || contains(doc.source_doc_id, q)) return true;
-    return doc.links.some(function (l) {
+    return docLinks(doc).some(function (l) {
       return contains(l.candidate_label, q) || contains(l.candidate_slug, q) || contains(l.candidate_id, q);
     });
   }
@@ -559,9 +660,24 @@
   function attachRowHandlers(doc) {
     var card = document.querySelector('.card[data-doc-id="' + CSS.escape(doc.source_doc_id) + '"]');
     if (!card) return;
+    var form = card.querySelector(".add-link");
+    var input = form.querySelector("input");
+    var msg = form.querySelector(".add-msg");
+    input.addEventListener("input", function () {
+      if (!input.value.trim()) { msg.textContent = ""; return; }
+      var res = resolveUrl(doc, input.value);
+      msg.textContent = res.error ? "⚠ " + res.error : "→ " + res.summary;
+    });
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!input.value.trim()) return;
+      var res = addManualLink(doc, input.value);
+      if (res.error) { msg.textContent = "⚠ " + res.error; return; }
+      render();
+    });
     Array.prototype.forEach.call(card.querySelectorAll(".link-row"), function (row) {
       var key = row.getAttribute("data-key");
-      var link = doc.links.find(function (l) { return tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id) === key; });
+      var link = docLinks(doc).find(function (l) { return tagKey(doc.source_doc_id, l.candidate_type, l.candidate_id) === key; });
       if (!link) return;
       Array.prototype.forEach.call(row.querySelectorAll(".vote-btn"), function (btn) {
         btn.addEventListener("click", function () {
