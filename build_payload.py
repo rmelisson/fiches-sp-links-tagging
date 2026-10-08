@@ -1,52 +1,21 @@
 #!/usr/bin/env python3
-"""Assemble le contenu à chiffrer pour l'UI de tagging.
+"""Reconstruit le contenu à chiffrer pour l'UI de tagging depuis des liens existants.
 
-Sortie : un JSON {links, docs, l2}
-  - links : liens suggérés (fiches_service_public_links.json)
-  - docs  : annuaire des documents [{s: source, g: slug, i: id, t: titre}], pour
-            résoudre une URL code.travail.gouv.fr collée dans l'UI
-  - l2    : {slug L2 -> slug L1}, pour valider les URL /themes/<l1>#<l2>
+`uv run l2-recommend-links` écrit déjà `tagging_payload.json` à côté des liens ;
+ce script ne sert qu'à le refaire depuis un fichier de liens déjà généré.
 
 Usage (depuis analysis/) :
-  python tools/build_payload.py [sortie.json]
+  uv run python tools/build_payload.py [liens.json [sortie.json]]
 puis : PASSWORD=... node tools/encrypt.mjs data <sortie.json>
 """
-import csv
-import json
 import sys
 from pathlib import Path
 
+from analysis.l2.tagging_payload import main
+
 OUT = Path(__file__).resolve().parent.parent / "output" / "l2"
 
-
-def main() -> None:
-    target = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT / "tagging_payload.json"
-    csv.field_size_limit(sys.maxsize)  # la colonne embedding est très longue
-
-    links = json.loads((OUT / "fiches_service_public_links.json").read_text(encoding="utf-8"))
-    l2 = json.loads((OUT / "l2_l1.json").read_text(encoding="utf-8"))
-    with (OUT / "docs-titles.csv").open(encoding="utf-8", newline="") as f:
-        docs = [
-            {"s": r["source"], "g": r["slug"], "i": r["id"], "t": r["title"]}
-            for r in csv.DictReader(f)
-            if r["slug"] and r["id"]
-        ]
-
-    # Tout document déjà suggéré doit pouvoir être retrouvé, même absent de docs-titles.csv.
-    known = {(d["s"], d["g"]) for d in docs}
-    for doc in links:
-        for link in doc["links"]:
-            key = (link["candidate_source"], link["candidate_slug"])
-            if link["candidate_type"] == "document" and key not in known:
-                known.add(key)
-                docs.append({"s": key[0], "g": key[1], "i": link["candidate_id"], "t": link["candidate_label"]})
-
-    target.write_text(
-        json.dumps({"links": links, "docs": docs, "l2": l2}, ensure_ascii=False, separators=(",", ":")),
-        encoding="utf-8",
-    )
-    print(f"{target} : {len(links)} fiches, {len(docs)} documents, {len(l2)} thèmes L2")
-
-
 if __name__ == "__main__":
-    main()
+    links = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT / "fiches_service_public_links.json"
+    target = Path(sys.argv[2]) if len(sys.argv) > 2 else links.parent / "tagging_payload.json"
+    main([str(links), str(OUT / "l2_l1.json"), str(OUT / "docs_openapi.csv"), str(target)])

@@ -11,23 +11,24 @@ Un seul mot de passe partagé déchiffre à la fois les liens (`links.enc.js`) e
 | `index.html` | l'UI | oui |
 | `links.enc.js` | liens + annuaire des documents, chiffrés | oui |
 | `gh_config.js` | dépôt cible + jeton GitHub chiffré | oui |
-| `build_payload.py` | assemble les données à chiffrer | non |
+| `build_payload.py` | refait `tagging_payload.json` depuis des liens existants (la logique est dans `analysis.l2.tagging_payload`) | non |
 | `encrypt.mjs` | chiffre les données et le jeton | non |
 
-Ne jamais publier `output/l2/tagging_payload.json` ni `fiches_service_public_links.json` (données en clair).
+Ne jamais publier `tagging_payload.json` ni `fiches_service_public_links.json` (données en clair).
 
 ## Mettre à jour les liens
 
-Depuis `analysis/`, après avoir régénéré `output/l2/fiches_service_public_links.json` :
+`uv run l2-recommend-links …` (depuis `analysis/`) écrit `tagging_payload.json` dans le dossier de sortie, à côté de `fiches_service_public_links.json` (désactivable avec `--no-tagging-payload`). Il ne reste qu'à le chiffrer :
 
 ```bash
-python3 tools/build_payload.py
-PASSWORD='<mot de passe>' node tools/encrypt.mjs data output/l2/tagging_payload.json
+PASSWORD='<mot de passe>' node tools/encrypt.mjs data output/l2/<dossier de sortie>/tagging_payload.json
 ```
 
 Puis republier `links.enc.js`. Les évaluations existantes restent valables tant que les `candidate_id` ne changent pas.
 
-L'annuaire utilisé pour résoudre les URL collées vient de `output/l2/docs-titles.csv` : un document publié après la génération de ce fichier sera refusé tant que le payload n'est pas reconstruit.
+Pour refaire le payload depuis un fichier de liens déjà généré : `uv run python tools/build_payload.py [liens.json [sortie.json]]`.
+
+L'annuaire utilisé pour résoudre les URL collées vient du `docs.csv` passé à `l2-recommend-links` (même ids que les liens) : un document publié après la génération de ce fichier sera refusé tant que le payload n'est pas reconstruit.
 
 ## Configurer le jeton GitHub
 
