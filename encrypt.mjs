@@ -8,6 +8,10 @@
 //   # liens à évaluer + annuaire des documents -> links.enc.js
 //   python build_payload.py           # produit ../output/l2/tagging_payload.json
 //   PASSWORD='...' node encrypt.mjs data ../output/l2/tagging_payload.json
+//
+//   # questions + thèmes proposés -> questions.enc.js
+//   uv run l2-theme-questions ... --payload-sample 2000    # produit questions_payload.json
+//   PASSWORD='...' node encrypt.mjs questions ../output/l2/themed_questions/questions_payload.json
 import { webcrypto as crypto } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
@@ -40,15 +44,16 @@ if (mode === "token") {
   const enc = await encrypt(new TextEncoder().encode(GH_TOKEN), PASSWORD);
   write("gh_config.js", "GH_CONFIG", { repo, branch, dir, enc });
   console.log(`gh_config.js écrit pour ${repo}@${branch} (${dir}/)`);
-} else if (mode === "data") {
+} else if (mode === "data" || mode === "questions") {
   const [file] = args;
-  if (!file) { console.error("Usage: PASSWORD=... node encrypt.mjs data <links.json>"); process.exit(1); }
+  if (!file) { console.error(`Usage: PASSWORD=... node encrypt.mjs ${mode} <fichier.json>`); process.exit(1); }
+  const [out, varName] = mode === "data" ? ["links.enc.js", "LINKS_ENC"] : ["questions.enc.js", "QUESTIONS_ENC"];
   const json = readFileSync(file, "utf-8");
   JSON.parse(json); // échoue tôt si le fichier n'est pas du JSON valide
   const enc = await encrypt(gzipSync(Buffer.from(json, "utf-8")), PASSWORD);
-  write("links.enc.js", "LINKS_ENC", enc);
-  console.log(`links.enc.js écrit (${(enc.ct.length / 1024).toFixed(0)} Ko en base64)`);
+  write(out, varName, enc);
+  console.log(`${out} écrit (${(enc.ct.length / 1024).toFixed(0)} Ko en base64)`);
 } else {
-  console.error("Mode attendu : token | data");
+  console.error("Mode attendu : token | data | questions");
   process.exit(1);
 }

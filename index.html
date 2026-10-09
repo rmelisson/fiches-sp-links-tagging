@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Fiches SP — évaluation des liens</title>
+<title>Fiches SP — liens et thèmes des questions</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,18 +46,25 @@
     line-height: 1.5;
     padding-inline: 20px;
   }
+  .progress-bar:empty { display: none; }
   .wrap { max-width: 880px; margin: 0 auto; }
 
   header {
     position: sticky;
     top: 0;
     background: var(--bg);
-    padding-block: 20px 14px;
+    padding-block: 8px 6px;
     z-index: 5;
     border-bottom: 1px solid var(--line);
   }
-  h1 { font-size: 21px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .subtitle { color: var(--ink-muted); font-size: 13px; margin: 0 0 14px; }
+  .topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; }
+  .toolbar input[type="search"] { flex: 1 1 240px; min-width: 180px; padding: 6px 10px; font-size: 13px; }
+  .toolbar select { padding: 6px 8px; font-size: 12.5px; max-width: 200px; }
+  .toolbar .chips { margin: 0; gap: 6px; }
+  .toolbar .count-line { flex-basis: 100%; padding: 0; font-size: 12px; }
+  .btn.small { padding: 4px 10px; font-size: 12px; }
 
   .panel-label {
     font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
@@ -75,8 +82,9 @@
 
   .github-panel {
     background: var(--surface); border: 1px solid var(--line-strong);
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+    border-radius: 10px; padding: 12px 14px; margin: 16px 0 10px;
   }
+  .github-hint { margin: 10px 0 0; font-size: 12px; color: var(--ink-muted); }
   .github-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
   }
@@ -89,16 +97,10 @@
     border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-2); color: var(--ink);
   }
   .github-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .github-status { flex: 1; min-width: 160px; font-size: 12px; color: var(--ink-muted); }
+  .github-status { flex: 1; min-width: 120px; font-size: 12px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .stats-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 84px; }
-  .stat .n { font-family: var(--font-mono); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .stat .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); }
-  .stat.good .n { color: var(--good); }
-  .stat.bad .n { color: var(--bad); }
 
-  .progress-bar { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-bottom: 12px; display: flex; }
+  .progress-bar { height: 3px; background: var(--surface-2); overflow: hidden; margin-top: 6px; display: flex; }
   .progress-bar .seg-good { background: var(--good); }
   .progress-bar .seg-bad { background: var(--bad); }
 
@@ -106,7 +108,7 @@
   .chip {
     display: flex; align-items: center; gap: 6px;
     border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
-    border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 500;
+    border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 500;
     cursor: pointer; font-family: var(--font-sans);
   }
   .chip .n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-muted); }
@@ -122,7 +124,7 @@
 
   main { padding-bottom: 24px; }
 
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 13px 16px; margin-block: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-block: 8px; }
   .card-title { font-size: 15px; font-weight: 600; margin: 0; }
   .card-meta { color: var(--ink-muted); font-size: 12px; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
   .card-meta .id { font-family: var(--font-mono); }
@@ -164,50 +166,112 @@
     background: var(--accent); color: var(--accent-ink); border: none; border-radius: 999px; cursor: pointer;
   }
   .no-results { text-align: center; color: var(--ink-muted); padding: 60px 20px; font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line-strong);
+    background: var(--surface-2); color: var(--ink-muted);
+  }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .filters-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+  select {
+    font-family: var(--font-sans); font-size: 13px; padding: 8px 10px; max-width: 100%;
+    border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .q-card.reviewed { border-color: var(--good); }
+  .q-card.reviewed.corrected { border-color: var(--warn); }
+  .q-card.no-theme { border-style: dashed; }
+  .q-text { margin: 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .q-text.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .more { background: none; border: none; padding: 0; margin-top: 2px; font-size: 12px; color: var(--accent); cursor: pointer; font-family: var(--font-sans); }
+  .q-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .q-actions .props, .q-actions .q-suggest { margin-top: 0; }
+  .theme-line { font-weight: 600; color: var(--ink); }
+  .status-badge {
+    font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+    padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--ink-muted);
+  }
+  .status-badge.validated { color: var(--good); border-color: var(--good); }
+  .status-badge.corrected { color: var(--warn); border-color: var(--warn); }
+  .props { display: flex; flex-wrap: wrap; gap: 6px; }
+  .prop-btn {
+    font-family: var(--font-sans); font-size: 12px; cursor: pointer; text-align: left;
+    padding: 4px 9px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+  }
+  .prop-btn .sc { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-muted); margin-left: 4px; }
+  .prop-btn .l1 { color: var(--ink-muted); }
+  .prop-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .prop-btn.active .sc, .prop-btn.active .l1 { color: var(--accent-ink); opacity: 0.8; }
+  .prop-btn.revert { border-style: dashed; background: transparent; }
+  .q-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 260px; }
+  .q-suggest input {
+    flex: 1; min-width: 160px; padding: 5px 9px; font-size: 12px; font-family: var(--font-sans);
+    border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .q-suggest .btn { padding: 4px 10px; font-size: 12px; }
+  .q-suggest .add-msg { flex-basis: 100%; font-size: 12px; color: var(--ink-muted); }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <header>
-    <h1>Fiches service public — évaluer les liens suggérés</h1>
-    <p class="subtitle">
-      510 documents, 2 728 liens suggérés. Évaluez chaque lien 👍 pertinent / 👎 non pertinent.
+  <div class="github-panel" id="gh-panel">
+    <div class="github-grid">
+      <label>Votre nom
+        <input type="text" id="gh-reviewer" placeholder="prénom" autocomplete="off">
+      </label>
+      <label>Mot de passe
+        <input type="password" id="gh-password" autocomplete="off">
+      </label>
+    </div>
+    <p class="github-hint">
+      Les évaluations sont partagées (un fichier par onglet), signées de votre nom, puis sauvegardées automatiquement après connexion.
+      Fiches : 👍 pertinent / 👎 non pertinent pour chaque lien. Questions : validez le thème proposé, choisissez-en un autre ou cherchez-en un.
     </p>
+  </div>
 
-    <div class="panel-label">Enregistrement partagé (GitHub)</div>
-    <div class="github-panel">
-      <div class="github-grid">
-        <label>Votre nom
-          <input type="text" id="gh-reviewer" placeholder="prénom" autocomplete="off">
-        </label>
-        <label>Mot de passe
-          <input type="password" id="gh-password" autocomplete="off">
-        </label>
+  <header>
+    <div class="topbar">
+      <h1>Fiches SP</h1>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" role="tab" data-tab="fiches">Liens suggérés</button>
+        <button type="button" class="tab" role="tab" data-tab="questions">Thèmes des questions</button>
       </div>
-      <div class="github-actions">
-        <button type="button" class="btn primary" id="btn-github-sync">Se connecter / Enregistrer</button>
-        <span class="github-status" id="github-status">
-          Les évaluations sont partagées (un seul fichier) et signées de votre nom ; après connexion elles sont sauvegardées automatiquement.
-        </span>
-      </div>
+      <span class="github-status" id="github-status" title="État de la synchronisation">Non connecté.</span>
+      <button type="button" class="btn small" id="btn-gh-toggle" hidden title="Afficher / masquer nom et mot de passe">👤</button>
+      <button type="button" class="btn primary small" id="btn-github-sync">Se connecter / Enregistrer</button>
     </div>
-
-    <div class="stats-row" id="stats-row"></div>
     <div class="progress-bar" id="progress-bar"></div>
-    <div class="chips" id="chips"></div>
-    <div class="searchrow">
-      <input type="search" id="search" placeholder="Filtrer par titre, slug ou id (document ou lien)…" autocomplete="off">
+
+    <div id="view-fiches" class="toolbar">
+      <input type="search" id="search" placeholder="Titre, slug ou id (document ou lien)…" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <div class="count-line" id="count-line"></div>
     </div>
-    <div class="count-line" id="count-line"></div>
+
+    <div id="view-questions" class="toolbar" hidden>
+      <input type="search" id="q-search" placeholder="Mots de la question (tous requis) ou id…" autocomplete="off">
+      <select id="q-l1" aria-label="Thème L1"></select>
+      <select id="q-l2" aria-label="Thème L2"></select>
+      <select id="q-sort" aria-label="Tri">
+        <option value="orig">Ordre d'origine</option>
+        <option value="score">Moins sûres d'abord</option>
+      </select>
+      <div class="chips" id="q-chips"></div>
+      <div class="count-line" id="q-count-line"></div>
+    </div>
   </header>
   <main id="main"></main>
   <button type="button" class="load-more" id="load-more" hidden>Charger 30 documents de plus</button>
+  <main id="q-main" hidden></main>
+  <button type="button" class="load-more" id="q-load-more" hidden>Charger 30 questions de plus</button>
+  <datalist id="l2-list"></datalist>
 </div>
 
 <script src="gh_config.js"></script>
 <script src="links.enc.js"></script>
+<script src="questions.enc.js"></script>
 <script>
 (function () {
   "use strict";
@@ -215,13 +279,14 @@
   var DOC_INDEX = { byUrl: new Map(), byId: new Map() };   // annuaire pour les liens ajoutés à la main
   var L2_TO_L1 = {};
   var PAGE_SIZE = 30;
-  var state = { filter: "all", query: "", shown: PAGE_SIZE, tags: new Map() };
+  var state = { filter: "all", query: "", shown: PAGE_SIZE, tags: new Map(), themes: new Map(), tab: "fiches" };
 
   var CONFIDENCE_LABELS = { strong: "fort", moderate: "modéré", weak: "faible", manual: "ajouté" };
   var TYPE_LABELS = { document: "document", l2: "thème L2" };
 
   // --- CSV helpers -------------------------------------------------------
   var CSV_HEADER = ["source_doc_id", "candidate_id", "candidate_type", "candidate_label", "vote", "tagged_at", "tagged_by", "manual"];
+  var THEME_HEADER = ["question_id", "l2", "l1", "model_l2", "tagged_at", "tagged_by"];
 
   function csvEscape(v) {
     v = v == null ? "" : String(v);
@@ -229,10 +294,10 @@
     return v;
   }
 
-  function tagsToCsv() {
-    var lines = [CSV_HEADER.join(",")];
-    state.tags.forEach(function (t) {
-      lines.push(CSV_HEADER.map(function (k) { return csvEscape(t[k]); }).join(","));
+  function toCsv(store) {
+    var lines = [store.header.join(",")];
+    store.map.forEach(function (t) {
+      lines.push(store.header.map(function (k) { return csvEscape(t[k]); }).join(","));
     });
     return lines.join("\n") + "\n";
   }
@@ -240,7 +305,7 @@
   // Minimal CSV parser -- good enough for our own escaping above (quoted
   // fields with "" for embedded quotes, no multi-line fields outside quotes
   // beyond what csvEscape produces).
-  function parseCsv(text) {
+  function parseCsv(text, header) {
     var rows = [];
     var lines = text.split(/\r\n|\n/).filter(function (l) { return l.length > 0; });
     for (var i = 1; i < lines.length; i++) {
@@ -264,7 +329,7 @@
       }
       fields.push(cur);
       var row = {};
-      CSV_HEADER.forEach(function (k, idx) { row[k] = fields[idx] || ""; });
+      header.forEach(function (k, idx) { row[k] = fields[idx] || ""; });
       rows.push(row);
     }
     return rows;
@@ -276,14 +341,30 @@
 
   // Fusion par lien : l'évaluation la plus récente l'emporte. Une évaluation
   // annulée reste dans le fichier avec vote vide (elle se propage ainsi aux autres).
-  function mergeRow(r) {
-    if (!r.source_doc_id || !r.candidate_id) return;
-    var key = tagKey(r.source_doc_id, r.candidate_type, r.candidate_id);
-    var existing = state.tags.get(key);
-    if (!existing || (r.tagged_at || "") > (existing.tagged_at || "")) state.tags.set(key, r);
+  function mergeRow(store, r) {
+    var key = store.key(r);
+    if (!key) return;
+    var existing = store.map.get(key);
+    if (!existing || (r.tagged_at || "") > (existing.tagged_at || "")) store.map.set(key, r);
   }
-  function loadRowsIntoState(rows) {
-    rows.forEach(mergeRow);
+  function loadRowsIntoState(store, rows) {
+    rows.forEach(function (r) { mergeRow(store, r); });
+  }
+
+  // Deux fichiers CSV partagés sur GitHub, synchronisés indépendamment :
+  // les votes sur les liens des fiches et les thèmes choisis pour les questions.
+  var STORES = {
+    links: {
+      file: "link_tags.csv", header: CSV_HEADER, map: state.tags, dirty: false, version: 0, commit: "votes",
+      key: function (r) { return r.source_doc_id && r.candidate_id ? tagKey(r.source_doc_id, r.candidate_type, r.candidate_id) : null; }
+    },
+    themes: {
+      file: "question_themes.csv", header: THEME_HEADER, map: state.themes, dirty: false, version: 0, commit: "themes",
+      key: function (r) { return r.question_id || null; }
+    }
+  };
+  function anyDirty() {
+    return STORES.links.dirty || STORES.themes.dirty;
   }
   function activeTag(key) {
     var t = state.tags.get(key);
@@ -309,11 +390,19 @@
   var GH = window.GH_CONFIG || null;
   var ghToken = null;
   var ghConnected = false;
-  var dirty = false;
+  var sharedPassword = "";
+  var ghPanelOpen = true;
+
+  // Avant connexion : nom et mot de passe visibles. Ensuite : repliés, le bouton 👤 les rouvre.
+  function updateGhPanel() {
+    document.getElementById("gh-panel").hidden = !ghPanelOpen;
+    var toggle = document.getElementById("btn-gh-toggle");
+    toggle.hidden = !ghConnected;
+    toggle.textContent = "👤 " + currentReviewer();
+  }
   var syncTimer = null;
   var syncing = false;
   var syncAgain = false;
-  var changeCount = 0;
   var AUTOSYNC_DELAY_MS = 20000;
 
   function loadReviewer() {
@@ -340,10 +429,14 @@
     return new TextDecoder().decode(await decryptBytes(GH.enc, password));
   }
 
-  async function decryptLinks(password) {
-    var gz = await decryptBytes(window.LINKS_ENC, password);
+  async function decryptJson(enc, password) {
+    var gz = await decryptBytes(enc, password);
     var stream = new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"));
-    var payload = JSON.parse(await new Response(stream).text());
+    return JSON.parse(await new Response(stream).text());
+  }
+
+  async function decryptLinks(password) {
+    var payload = await decryptJson(window.LINKS_ENC, password);
     return Array.isArray(payload) ? { links: payload, docs: [], l2: {} } : payload;
   }
 
@@ -368,20 +461,20 @@
     }));
   }
 
-  function votesPath() {
-    return GH.dir + "/link_tags.csv";
+  function storePath(store) {
+    return GH.dir + "/" + store.file;
   }
   function contentsUrl(path) {
     return "https://api.github.com/repos/" + GH.repo + "/contents/" + path;
   }
 
   // Récupère le fichier du relecteur ; renvoie { sha, rows } (sha null si absent).
-  async function fetchRemote(path) {
+  async function fetchRemote(path, header) {
     var res = await githubRequest(contentsUrl(path) + "?ref=" + encodeURIComponent(GH.branch));
     if (res.status === 404) return { sha: null, rows: [] };
     if (!res.ok) throw new Error("Lecture impossible (HTTP " + res.status + ")");
     var data = await res.json();
-    return { sha: data.sha, rows: parseCsv(base64ToUtf8(data.content.replace(/\n/g, ""))) };
+    return { sha: data.sha, rows: parseCsv(base64ToUtf8(data.content.replace(/\n/g, "")), header) };
   }
 
   async function connect() {
@@ -393,38 +486,63 @@
     try {
       ghToken = await decryptToken(password);
       loadPayload(await decryptLinks(password));
+      if (window.QUESTIONS_ENC) loadQuestions(await decryptJson(window.QUESTIONS_ENC, password));
     } catch (e) {
       throw new Error("Mot de passe incorrect.");
     }
+    sharedPassword = password;
+    ghPanelOpen = false;
+    updateGhPanel();
     localStorage.setItem("link-tagging:reviewer", name);
     // Reprise des évaluations déjà enregistrées (par tous les relecteurs).
-    loadRowsIntoState((await fetchRemote(votesPath())).rows);
+    for (var k in STORES) {
+      var store = STORES[k];
+      loadRowsIntoState(store, (await fetchRemote(storePath(store), store.header)).rows);
+    }
     ghConnected = true;
-    render();
+    updateGhPanel();
+    refresh();
   }
 
-  async function pushToGithub() {
-    var path = votesPath();
+  async function pushStore(store) {
+    var path = storePath(store);
+    var versionAtStart = store.version;
     var lastError = "";
     for (var attempt = 0; attempt < 4; attempt++) {
       if (attempt > 0) await new Promise(function (r) { setTimeout(r, 800 * attempt); });
-      var remote = await fetchRemote(path);
-      loadRowsIntoState(remote.rows);   // intègre les évaluations des autres avant d'écrire
+      var remote = await fetchRemote(path, store.header);
+      loadRowsIntoState(store, remote.rows);   // intègre les lignes des autres avant d'écrire
       var body = {
-        message: "votes: " + (currentReviewer() || "anonyme") + " (" + state.tags.size + ")",
-        content: utf8ToBase64(tagsToCsv()),
+        message: store.commit + ": " + (currentReviewer() || "anonyme") + " (" + store.map.size + ")",
+        content: utf8ToBase64(toCsv(store)),
         branch: GH.branch
       };
       if (remote.sha) body.sha = remote.sha;
       var res = await githubRequest(contentsUrl(path), { method: "PUT", body: JSON.stringify(body) });
-      if (res.ok) { render(); return; }
+      if (res.ok) {
+        store.dirty = store.version !== versionAtStart;   // des modifications ont pu arriver pendant l'envoi
+        return;
+      }
       lastError = "HTTP " + res.status + ": " + (await res.text()).slice(0, 200);
       if (res.status !== 409 && res.status !== 422) break;
     }
-    throw new Error("Écriture impossible (" + lastError + ")");
+    throw new Error("Écriture impossible dans " + path + " (" + lastError + ")");
   }
 
-  async function syncToGithub() {
+  // Écrit les fichiers modifiés ; avec `force` (clic sur le bouton), aussi ceux qui ont du contenu.
+  async function pushToGithub(force) {
+    var written = [];
+    for (var k in STORES) {
+      var store = STORES[k];
+      if (!store.dirty && !(force && store.map.size)) continue;
+      await pushStore(store);
+      written.push(store.file + " (" + store.map.size + " ligne(s))");
+    }
+    refresh();
+    return written;
+  }
+
+  async function syncToGithub(force) {
     // Une seule écriture à la fois : deux PUT concurrents se périmeraient mutuellement (409).
     if (syncing) { syncAgain = true; return; }
     var btn = document.getElementById("btn-github-sync");
@@ -432,27 +550,27 @@
     syncing = true;
     btn.disabled = true;
     setGithubStatus("Synchronisation en cours…");
-    var versionAtStart = changeCount;
+    var ok = false;
     try {
       if (!ghConnected) await connect();
-      await pushToGithub();
-      dirty = changeCount !== versionAtStart;   // des votes ont pu arriver pendant l'envoi
-      setGithubStatus("✓ Enregistré dans " + votesPath() + " (" + state.tags.size + " ligne(s))");
+      var written = await pushToGithub(force === true);
+      ok = true;
+      setGithubStatus(written.length ? "✓ Enregistré : " + written.join(", ") : "✓ Connecté, rien à enregistrer.");
     } catch (e) {
       setGithubStatus("⚠ " + e.message);
-      if (ghConnected) dirty = true;
     } finally {
       syncing = false;
       btn.disabled = false;
-      if (syncAgain || (dirty && ghConnected && changeCount !== versionAtStart)) {
+      if (syncAgain || (ok && ghConnected && anyDirty())) {
         syncAgain = false;
         syncTimer = setTimeout(syncToGithub, 1000);
       }
     }
   }
 
-  function scheduleAutosync() {
-    dirty = true;
+  function scheduleAutosync(store) {
+    store.dirty = true;
+    store.version++;
     if (!ghConnected) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncToGithub, AUTOSYNC_DELAY_MS);
@@ -463,7 +581,6 @@
   function writeTag(doc, link, vote) {
     var key = tagKey(doc.source_doc_id, link.candidate_type, link.candidate_id);
     var previous = state.tags.get(key);
-    changeCount++;
     state.tags.set(key, {
       source_doc_id: doc.source_doc_id,
       candidate_id: link.candidate_id,
@@ -481,7 +598,7 @@
     var current = activeTag(key);
     writeTag(doc, link, current && current.vote === vote ? "" : vote);
     render();
-    scheduleAutosync();
+    scheduleAutosync(STORES.links);
   }
 
   // --- affichage ---------------------------------------------------------
@@ -553,7 +670,7 @@
     var existing = activeTag(tagKey(doc.source_doc_id, res.link.candidate_type, res.link.candidate_id));
     if (!existing || existing.vote !== "good") {
       writeTag(doc, res.link, "good");
-      scheduleAutosync();
+      scheduleAutosync(STORES.links);
     }
     return res;
   }
@@ -567,15 +684,12 @@
   }
 
   function renderStats(stats) {
-    document.getElementById("stats-row").innerHTML =
-      '<div class="stat"><div class="n">' + stats.tagged + ' / ' + stats.totalLinks + '</div><div class="l">Évalués</div></div>' +
-      '<div class="stat good"><div class="n">' + stats.good + '</div><div class="l">Pertinents</div></div>' +
-      '<div class="stat bad"><div class="n">' + stats.bad + '</div><div class="l">Non pertinents</div></div>';
     var pctGood = stats.totalLinks ? (100 * stats.good / stats.totalLinks) : 0;
     var pctBad = stats.totalLinks ? (100 * stats.bad / stats.totalLinks) : 0;
-    document.getElementById("progress-bar").innerHTML =
-      '<div class="seg-good" style="width:' + pctGood + '%"></div>' +
-      '<div class="seg-bad" style="width:' + pctBad + '%"></div>';
+    var bar = document.getElementById("progress-bar");
+    bar.innerHTML = state.tab === "fiches" && stats.totalLinks
+      ? '<div class="seg-good" style="width:' + pctGood + '%"></div><div class="seg-bad" style="width:' + pctBad + '%"></div>' : "";
+    return "Évalués " + stats.tagged + " / " + stats.totalLinks + " (👍 " + stats.good + " · 👎 " + stats.bad + ")";
   }
 
   function docStatus(doc) {
@@ -602,7 +716,7 @@
       return '<button type="button" class="chip' + (state.filter === c.key ? " active" : "") +
         '" data-filter="' + c.key + '">' + esc(c.label) + '<span class="n">' + c.n + "</span></button>";
     }).join("");
-    Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (btn) {
+    Array.prototype.forEach.call(document.querySelectorAll("#chips .chip"), function (btn) {
       btn.addEventListener("click", function () {
         state.filter = btn.getAttribute("data-filter");
         state.shown = PAGE_SIZE;
@@ -703,8 +817,7 @@
   }
 
   function render() {
-    var stats = computeStats();
-    renderStats(stats);
+    var statsText = renderStats(computeStats());
     renderChips();
 
     if (!DOCS.length) {
@@ -712,6 +825,7 @@
         '<p class="no-results">🔒 Saisissez votre nom et le mot de passe, puis « Se connecter » pour afficher les liens.</p>';
       document.getElementById("count-line").textContent = "";
       document.getElementById("load-more").hidden = true;
+      document.getElementById("progress-bar").innerHTML = "";
       return;
     }
 
@@ -719,7 +833,7 @@
     var visible = filtered.slice(0, state.shown);
 
     document.getElementById("count-line").textContent =
-      visible.length + " document(s) affiché(s) sur " + filtered.length;
+      statsText + " — " + visible.length + " document(s) affiché(s) sur " + filtered.length;
 
     var main = document.getElementById("main");
     if (!filtered.length) {
@@ -729,8 +843,285 @@
       visible.forEach(attachRowHandlers);
     }
 
-    document.getElementById("load-more").hidden = state.shown >= filtered.length;
+    document.getElementById("load-more").hidden = state.tab !== "fiches" || state.shown >= filtered.length;
   }
+
+  // --- questions : thèmes ----------------------------------------------------
+  var NONE = "__none__";   // « Aucun thème » : question hors périmètre ou trop vague
+  var QUESTIONS = [];      // [{ id, t, m: [[l2, score], ...], n: texte normalisé }]
+  var QUESTION_BY_ID = new Map();
+  var qExpanded = new Set();   // questions longues dépliées
+  var Q_CLAMP_CHARS = 280;
+  var LOW_SCORE = 0;       // seuil « peu sûr » : 1er quartile du meilleur score
+  var qStatsText = "";
+  var qstate = { filter: "all", query: "", l1: "", l2: "", sort: "orig", shown: PAGE_SIZE };
+
+  function normalize(s) {
+    return String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+
+  function loadQuestions(payload) {
+    QUESTIONS = payload.questions;
+    QUESTIONS.forEach(function (q) { q.n = normalize(q.t + " " + q.id); QUESTION_BY_ID.set(q.id, q); });
+    Object.keys(payload.l2 || {}).forEach(function (k) { L2_TO_L1[k] = payload.l2[k]; });
+    var best = QUESTIONS.map(function (q) { return q.m[0][1]; }).sort(function (a, b) { return a - b; });
+    LOW_SCORE = best.length ? best[Math.floor(best.length / 4)] : 0;
+    document.getElementById("l2-list").innerHTML =
+      '<option value="' + esc(NONE) + '" label="Aucun thème"></option>' +
+      Object.keys(L2_TO_L1).sort().map(function (l2) {
+        return '<option value="' + esc(l2) + '" label="' + esc(L2_TO_L1[l2]) + '"></option>';
+      }).join("");
+  }
+
+  // Thème effectif : la correction active si elle existe, sinon la meilleure proposition.
+  function qTheme(q) {
+    var c = state.themes.get(q.id);
+    var l2 = c && c.l2 ? c.l2 : q.m[0][0];
+    return {
+      l2: l2,
+      l1: l2 === NONE ? "" : (L2_TO_L1[l2] || ""),
+      reviewed: !!(c && c.l2),
+      by: c && c.l2 ? c.tagged_by : "",
+      at: c && c.l2 ? c.tagged_at : ""
+    };
+  }
+  function themeLabel(l2) {
+    return l2 === NONE ? "Aucun thème" : (L2_TO_L1[l2] || "?") + " › " + l2;
+  }
+
+  function setTheme(q, l2) {
+    changeTheme(q, l2, l2 === NONE ? "" : (L2_TO_L1[l2] || ""));
+  }
+  function revertTheme(q) {
+    changeTheme(q, "", "");
+  }
+  function changeTheme(q, l2, l1) {
+    state.themes.set(q.id, {
+      question_id: q.id, l2: l2, l1: l1, model_l2: q.m[0][0],
+      tagged_at: new Date().toISOString(), tagged_by: currentReviewer()
+    });
+    scheduleAutosync(STORES.themes);
+    refreshQuestionCard(q);
+  }
+
+  function statusBadge(q, th) {
+    if (!th.reviewed) return "";
+    var validated = th.l2 === q.m[0][0];
+    return '<span class="status-badge ' + (validated ? "validated" : "corrected") + '">' + (validated ? "validé" : "corrigé") + "</span>" +
+      '<span>par <strong>' + esc(th.by) + "</strong> le " + esc((th.at || "").slice(0, 10)) + "</span>";
+  }
+
+  function questionCardHtml(q) {
+    var th = qTheme(q);
+    var long = q.t.length > Q_CLAMP_CHARS;
+    var proposals = q.m.map(function (m) {
+      return '<button type="button" class="prop-btn' + (th.l2 === m[0] ? " active" : "") + '" data-l2="' + esc(m[0]) + '">' +
+        '<span class="l1">' + esc(L2_TO_L1[m[0]] || "?") + " › </span>" + esc(m[0]) +
+        '<span class="sc">' + m[1].toFixed(2) + "</span></button>";
+    }).join("");
+    var none = '<button type="button" class="prop-btn' + (th.l2 === NONE ? " active" : "") + '" data-l2="' + NONE + '">Aucun thème</button>';
+    var revert = th.reviewed ? '<button type="button" class="prop-btn revert" data-revert="1">↺ Revenir à la proposition</button>' : "";
+    return '<article class="card q-card' + (th.reviewed ? " reviewed" + (th.l2 === q.m[0][0] ? "" : " corrected") : "") +
+      (th.l2 === NONE ? " no-theme" : "") + '" data-qid="' + esc(q.id) + '">' +
+      '<p class="q-text' + (long && !qExpanded.has(q.id) ? " clamped" : "") + '">' + esc(q.t) + "</p>" +
+      (long ? '<button type="button" class="more">' + (qExpanded.has(q.id) ? "Réduire" : "Voir plus") + "</button>" : "") +
+      '<div class="card-meta"><span class="id">' + esc(q.id) + "</span><span>·</span>" +
+      '<span class="theme-line">' + esc(themeLabel(th.l2)) + "</span>" + statusBadge(q, th) + "</div>" +
+      '<div class="q-actions"><div class="props">' + proposals + none + revert + "</div>" +
+      '<form class="q-suggest" autocomplete="off">' +
+      '<input type="text" list="l2-list" placeholder="Autre thème : taper un L2 ou un L1…">' +
+      '<button type="submit" class="btn">Appliquer</button><span class="add-msg"></span></form></div></article>';
+  }
+
+  // Thème L2 saisi : identifiant exact, sinon correspondance unique sur le début/contenu.
+  function resolveTheme(text) {
+    var t = text.trim();
+    if (!t) return { error: "Saisissez un thème." };
+    if (t === NONE || normalize(t) === "aucun theme") return { l2: NONE };
+    if (L2_TO_L1[t]) return { l2: t };
+    var n = normalize(t);
+    var hits = Object.keys(L2_TO_L1).filter(function (l2) { return normalize(l2).indexOf(n) !== -1; });
+    if (hits.length === 1) return { l2: hits[0] };
+    return { error: hits.length ? hits.length + " thèmes correspondent : précisez." : "Thème inconnu." };
+  }
+
+  function attachQuestionHandlers(q) {
+    var card = document.querySelector('.q-card[data-qid="' + CSS.escape(q.id) + '"]');
+    if (!card) return;
+    Array.prototype.forEach.call(card.querySelectorAll(".prop-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.getAttribute("data-revert")) revertTheme(q);
+        else setTheme(q, btn.getAttribute("data-l2"));
+      });
+    });
+    var more = card.querySelector(".more");
+    if (more) more.addEventListener("click", function () {
+      if (qExpanded.has(q.id)) qExpanded.delete(q.id); else qExpanded.add(q.id);
+      refreshQuestionCard(q);
+    });
+    var form = card.querySelector(".q-suggest");
+    var input = form.querySelector("input");
+    var msg = form.querySelector(".add-msg");
+    input.addEventListener("input", function () {
+      if (!input.value.trim()) { msg.textContent = ""; return; }
+      var res = resolveTheme(input.value);
+      msg.textContent = res.error ? "⚠ " + res.error : "→ " + themeLabel(res.l2);
+    });
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var res = resolveTheme(input.value);
+      if (res.error) { msg.textContent = "⚠ " + res.error; return; }
+      setTheme(q, res.l2);
+    });
+  }
+
+  // Remplace la carte sur place : la question reste affichée même si elle sort du filtre courant.
+  function refreshQuestionCard(q) {
+    var old = document.querySelector('.q-card[data-qid="' + CSS.escape(q.id) + '"]');
+    if (old) {
+      var tmp = document.createElement("div");
+      tmp.innerHTML = questionCardHtml(q);
+      old.replaceWith(tmp.firstChild);
+      attachQuestionHandlers(q);
+    }
+    renderQuestionHeader();
+  }
+
+  function qStatus(q) {
+    return state.themes.get(q.id) && state.themes.get(q.id).l2 ? "reviewed" : "todo";
+  }
+
+  function renderQuestionHeader() {
+    var reviewed = QUESTIONS.filter(function (q) { return qStatus(q) === "reviewed"; }).length;
+    var changed = QUESTIONS.filter(function (q) { return qStatus(q) === "reviewed" && qTheme(q).l2 !== q.m[0][0]; }).length;
+    qStatsText = "Revues " + reviewed + " / " + QUESTIONS.length + " (" + (reviewed - changed) + " validées · " + changed + " corrigées)";
+    var cats = [
+      { key: "all", label: "Toutes", n: QUESTIONS.length },
+      { key: "todo", label: "Non revues", n: QUESTIONS.length - reviewed },
+      { key: "reviewed", label: "Revues", n: reviewed },
+      { key: "low", label: "Peu sûres", n: QUESTIONS.filter(function (q) { return q.m[0][1] <= LOW_SCORE; }).length }
+    ];
+    document.getElementById("q-chips").innerHTML = cats.map(function (c) {
+      return '<button type="button" class="chip' + (qstate.filter === c.key ? " active" : "") +
+        '" data-filter="' + c.key + '">' + esc(c.label) + '<span class="n">' + c.n + "</span></button>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#q-chips .chip"), function (btn) {
+      btn.addEventListener("click", function () {
+        qstate.filter = btn.getAttribute("data-filter");
+        qstate.shown = PAGE_SIZE;
+        renderQuestions();
+      });
+    });
+
+    // Filtres de thème : comptes selon le thème effectif, hors filtre de thème lui-même.
+    var byL1 = {}, byL2 = {};
+    QUESTIONS.forEach(function (q) {
+      var th = qTheme(q);
+      var l1 = th.l2 === NONE ? NONE : th.l1;
+      byL1[l1] = (byL1[l1] || 0) + 1;
+      if (!qstate.l1 || qstate.l1 === l1) byL2[th.l2] = (byL2[th.l2] || 0) + 1;
+    });
+    var l1Select = document.getElementById("q-l1");
+    l1Select.innerHTML = '<option value="">Tous les thèmes L1</option>' +
+      Object.keys(byL1).sort().map(function (l1) {
+        return '<option value="' + esc(l1) + '">' + esc(l1 === NONE ? "Aucun thème" : l1) + " (" + byL1[l1] + ")</option>";
+      }).join("");
+    l1Select.value = qstate.l1;
+    var l2Select = document.getElementById("q-l2");
+    l2Select.innerHTML = '<option value="">Tous les thèmes L2</option>' +
+      Object.keys(byL2).filter(function (l2) { return l2 !== NONE; }).sort().map(function (l2) {
+        return '<option value="' + esc(l2) + '">' + esc(l2) + " (" + byL2[l2] + ")</option>";
+      }).join("");
+    l2Select.value = qstate.l2;
+    l2Select.hidden = qstate.l1 === NONE;
+  }
+
+  function getFilteredQuestions() {
+    var tokens = normalize(qstate.query).split(/\s+/).filter(Boolean);
+    var out = QUESTIONS.filter(function (q) {
+      var st = qStatus(q);
+      if (qstate.filter === "todo" && st !== "todo") return false;
+      if (qstate.filter === "reviewed" && st !== "reviewed") return false;
+      if (qstate.filter === "low" && q.m[0][1] > LOW_SCORE) return false;
+      if (qstate.l1 || qstate.l2) {
+        var th = qTheme(q);
+        if (qstate.l1 === NONE ? th.l2 !== NONE : (qstate.l1 && th.l1 !== qstate.l1)) return false;
+        if (qstate.l2 && th.l2 !== qstate.l2) return false;
+      }
+      return tokens.every(function (t) { return q.n.indexOf(t) !== -1; });
+    });
+    if (qstate.sort === "score") out = out.slice().sort(function (a, b) { return a.m[0][1] - b.m[0][1]; });
+    return out;
+  }
+
+  function renderQuestions() {
+    var main = document.getElementById("q-main");
+    if (!QUESTIONS.length) {
+      main.innerHTML = '<p class="no-results">' + (window.QUESTIONS_ENC
+        ? "🔒 Saisissez votre nom et le mot de passe, puis « Se connecter » pour afficher les questions."
+        : "Aucune question publiée (questions.enc.js introuvable).") + "</p>";
+      document.getElementById("q-count-line").textContent = "";
+      document.getElementById("q-load-more").hidden = true;
+      return;
+    }
+    renderQuestionHeader();
+    var filtered = getFilteredQuestions();
+    var visible = filtered.slice(0, qstate.shown);
+    document.getElementById("q-count-line").textContent =
+      qStatsText + " — " + visible.length + " question(s) affichée(s) sur " + filtered.length;
+    main.innerHTML = filtered.length
+      ? visible.map(questionCardHtml).join("")
+      : '<p class="no-results">Aucune question ne correspond à ces filtres.</p>';
+    visible.forEach(attachQuestionHandlers);
+    document.getElementById("q-load-more").hidden = state.tab !== "questions" || qstate.shown >= filtered.length;
+  }
+
+  function refresh() {
+    render();
+    renderQuestions();
+  }
+
+  function switchTab(tab) {
+    state.tab = tab;
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+    });
+    var fiches = tab === "fiches";
+    document.getElementById("view-fiches").hidden = !fiches;
+    document.getElementById("main").hidden = !fiches;
+    document.getElementById("view-questions").hidden = fiches;
+    document.getElementById("q-main").hidden = fiches;
+    refresh();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+    b.addEventListener("click", function () { switchTab(b.getAttribute("data-tab")); });
+  });
+  document.getElementById("q-search").addEventListener("input", function (e) {
+    qstate.query = e.target.value;
+    qstate.shown = PAGE_SIZE;
+    renderQuestions();
+  });
+  document.getElementById("q-l1").addEventListener("change", function (e) {
+    qstate.l1 = e.target.value;
+    qstate.l2 = "";
+    qstate.shown = PAGE_SIZE;
+    renderQuestions();
+  });
+  document.getElementById("q-l2").addEventListener("change", function (e) {
+    qstate.l2 = e.target.value;
+    qstate.shown = PAGE_SIZE;
+    renderQuestions();
+  });
+  document.getElementById("q-sort").addEventListener("change", function (e) {
+    qstate.sort = e.target.value;
+    qstate.shown = PAGE_SIZE;
+    renderQuestions();
+  });
+  document.getElementById("q-load-more").addEventListener("click", function () {
+    qstate.shown += PAGE_SIZE;
+    renderQuestions();
+  });
 
   document.getElementById("search").addEventListener("input", function (e) {
     state.query = e.target.value;
@@ -741,13 +1132,17 @@
     state.shown += PAGE_SIZE;
     render();
   });
-  document.getElementById("btn-github-sync").addEventListener("click", syncToGithub);
+  document.getElementById("btn-gh-toggle").addEventListener("click", function () {
+    ghPanelOpen = !ghPanelOpen;
+    updateGhPanel();
+  });
+  document.getElementById("btn-github-sync").addEventListener("click", function () { syncToGithub(true); });
 
   loadReviewer();
   window.addEventListener("beforeunload", function (e) {
-    if (dirty) { e.preventDefault(); e.returnValue = ""; }
+    if (anyDirty()) { e.preventDefault(); e.returnValue = ""; }
   });
-  render();
+  refresh();
 })();
 </script>
 </body>
