@@ -104,7 +104,7 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 8424,preavis-de-licenciement-et-de-demission,fin-et-rupture-du-contrat,demission,2026-10-27T15:49:46.361Z,clarisse
 8369,abandon-de-poste,fin-et-rupture-du-contrat,demission,2026-10-27T15:49:51.023Z,clarisse
 9715,preavis-de-licenciement-et-de-demission,fin-et-rupture-du-contrat,demission,2026-10-27T15:50:04.729Z,clarisse
-10779,,,conges-payes,2026-10-27T15:50:44.966Z,clarisse
+10779,conges-payes,conges,conges-payes,2026-10-28T11:20:38.297Z,clarisse
 12482,conges-payes,conges,conges-payes,2026-10-27T15:51:03.702Z,clarisse
 13656,conges-payes,conges,conges-payes,2026-10-27T15:52:58.402Z,clarisse
 13809,conges-payes,conges,conges-payes,2026-10-27T15:53:02.844Z,clarisse
@@ -150,3 +150,4 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 10584,regime-de-retraite,retraite,depart-volontaire-a-la-retraite,2026-10-28T11:17:19.776Z,clarisse
 10627,remboursements-de-frais-et-avantages,remuneration,remboursements-de-frais-et-avantages,2026-10-28T11:18:46.159Z,clarisse
 10637,conges-payes,conges,conges-payes,2026-10-28T11:20:14.374Z,clarisse
+11053,conges-payes,conges,conges-payes,2026-10-28T11:20:46.274Z,clarisse
