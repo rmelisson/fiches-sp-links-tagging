@@ -136,3 +136,5 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 10715,inaptitude-au-travail,sante-au-travail,inaptitude-au-travail,2026-10-28T10:43:54.421Z,clarisse
 10760,conges-speciaux-sabbatique-demenagement,conges,conges-speciaux-sabbatique-demenagement,2026-10-28T10:45:52.841Z,clarisse
 10876,__none__,,formalites-dembauche,2026-10-28T10:57:50.149Z,clarisse
+11018,documents-de-fin-de-contrat-et-droit-des-salaries,fin-et-rupture-du-contrat,documents-de-fin-de-contrat-et-droit-des-salaries,2026-10-28T10:58:13.872Z,clarisse
+11025,preavis-de-licenciement-et-de-demission,fin-et-rupture-du-contrat,demission,2026-10-28T10:58:24.897Z,clarisse
