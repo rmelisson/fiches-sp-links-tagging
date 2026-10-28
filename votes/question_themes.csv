@@ -307,3 +307,6 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 1832,maternite,maternite-paternite-et-adoption,maternite,2026-10-28T16:02:16.200Z,clarisse
 18960,paternite,maternite-paternite-et-adoption,maternite,2026-10-28T16:03:19.128Z,clarisse
 17039,environnement-specifique-de-travail,risques-professionnels-et-preventions,local-de-travail,2026-10-28T16:03:44.680Z,clarisse
+16954,interim,contrat-de-travail,salaire,2026-10-28T16:06:28.681Z,clarisse
+3193,salaire,remuneration,salaire,2026-10-28T16:06:40.665Z,clarisse
+5374,primes,remuneration,salaire,2026-10-28T16:06:50.529Z,clarisse
