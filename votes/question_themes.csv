@@ -323,3 +323,5 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 11273,conges-payes,conges,conges-payes,2026-10-29T10:35:33.455Z,clarisse
 11340,conges-payes,conges,conges-payes,2026-10-29T10:36:40.415Z,clarisse
 11364,arret-de-travail-droits-et-obligations,sante-au-travail,arret-de-travail-droits-et-obligations,2026-10-29T10:36:58.247Z,clarisse
+11417,depart-volontaire-a-la-retraite,retraite,depart-volontaire-a-la-retraite,2026-10-29T10:38:43.886Z,clarisse
+11460,inaptitude-au-travail,sante-au-travail,licenciement-pour-inaptitude,2026-10-29T10:39:02.439Z,clarisse
