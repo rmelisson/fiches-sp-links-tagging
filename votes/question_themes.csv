@@ -325,3 +325,5 @@ question_id,l2,l1,model_l2,tagged_at,tagged_by
 11364,arret-de-travail-droits-et-obligations,sante-au-travail,arret-de-travail-droits-et-obligations,2026-10-29T10:36:58.247Z,clarisse
 11417,depart-volontaire-a-la-retraite,retraite,depart-volontaire-a-la-retraite,2026-10-29T10:38:43.886Z,clarisse
 11460,inaptitude-au-travail,sante-au-travail,licenciement-pour-inaptitude,2026-10-29T10:39:02.439Z,clarisse
+11480,procedure-et-licenciement-pour-motif-economique,fin-et-rupture-du-contrat,procedure-et-licenciement-pour-motif-economique,2026-10-29T10:39:28.591Z,clarisse
+11485,duree-du-travail,temps-de-travail,repos,2026-10-29T10:39:32.927Z,clarisse
